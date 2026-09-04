@@ -8,7 +8,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-def secretsFile = rootProject.file(".secret.properties")
+def secretsFile = project.file(".secret.properties")
 ext.secrets = new Properties()
 if (secretsFile.exists()) {
     secretsFile.withInputStream { stream ->
@@ -25,7 +25,7 @@ repositories {
     maven { url "https://maven.minecraftforge.net" }
     maven { url 'https://jitpack.io' }
     maven {
-        url = uri("https://maven.pkg.github.com/Robak132/LibGui-Forgified")
+        url = uri("https://maven.pkg.github.com/Robak132/LibGui-Forge")
         credentials {
             username = getSecret("GITHUB_ACTOR")
             password = getSecret("GITHUB_TOKEN")
@@ -34,15 +34,23 @@ repositories {
     mavenCentral()
 }
 
-version = project.mod_version
-group = project.maven_group
-base.archivesName = project.archives_base_name
+def modProperties = new Properties()
+file('gradle.properties').withInputStream { stream ->
+    modProperties.load(stream)
+}
+
+version = modProperties.getProperty('mod_version')
+group = modProperties.getProperty('maven_group')
+base.archivesName = modProperties.getProperty('archives_base_name')
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
-    toolchain { languageVersion = JavaLanguageVersion.of(17) }
     withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
 }
 
 minecraft {
@@ -58,7 +66,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                "${mod_id}" {
+                "${modProperties.getProperty('mod_id')}" {
                     source sourceSets.main
                 }
             }
@@ -67,25 +75,25 @@ minecraft {
         client {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', modProperties.getProperty('mod_id')
         }
 
         server {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', modProperties.getProperty('mod_id')
         }
 
         gameTestServer {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', modProperties.getProperty('mod_id')
         }
 
         data {
             workingDirectory project.file('run-data')
 
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', modProperties.getProperty('mod_id'), '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
 }
@@ -94,10 +102,10 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     minecraft("net.minecraftforge:forge:1.20.1-47.4.0")
-    if (getSecret("DEV", true)) {
-        api fg.deobf("io.github.robak132:libgui_forge:8.1.4")
+    if (findProject(':LibGui-Forge') != null) {
+        api project(':LibGui-Forge')
     } else {
-        compileOnly fg.deobf("io.github.robak132:libgui_forge:8.1.4")
+        api fg.deobf("io.github.robak132:libgui_forge:8.1.4")
     }
     api fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.136")
 

@@ -27,6 +27,6 @@ side="BOTH"
 [[dependencies.mcrgb_forge]]
 modId="libgui_forge"
 mandatory=true
-versionRange="8.1.3"
+versionRange="[8.1.4,)"
 ordering="NONE"
 side="BOTH"

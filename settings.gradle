@@ -9,21 +9,3 @@ pluginManagement {
 }
 
 rootProject.name = 'MCRGB-Forge'
-
-def secretsFile = file(".secret.properties")
-ext.secrets = new Properties()
-if (secretsFile.exists()) {
-    secretsFile.withInputStream { stream ->
-        secrets.load(stream)
-    }
-}
-
-def getSecret(String key, fallback = null) {
-    return secrets.getProperty(key) ?: System.getenv(key) ?: fallback
-}
-
-// Conditionally include LibGui-Forgified
-if (getSecret("DEV", false)) {
-//    include("LibGui-Forge")
-//    project(":LibGui-Forge").projectDir = file("../LibGui-Forge")
-}
