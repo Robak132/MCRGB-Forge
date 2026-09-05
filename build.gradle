@@ -9,21 +9,24 @@ plugins {
 }
 
 def secretsFile = project.file(".secret.properties")
-ext.secrets = new Properties()
 if (secretsFile.exists()) {
-    secretsFile.withInputStream { stream ->
-        secrets.load(stream)
-    }
+    ant.property(file: secretsFile, prefix: 'secret')
 }
 
-def getSecret(String key, fallback = null) {
-    return secrets.getProperty(key) ?: System.getenv(key) ?: fallback
+def getSecret = { key, fallback = null ->
+    ant.properties["secret.${key}"] ?: providers.environmentVariable(key).orNull ?: fallback
 }
 
 repositories {
-    maven { url "https://maven.shedaniel.me/" }
-    maven { url "https://maven.minecraftforge.net" }
-    maven { url 'https://jitpack.io' }
+    maven { url = uri("https://maven.shedaniel.me/") }
+    maven { url = uri("https://maven.terraformersmc.com/releases/") }
+    maven { url = uri("https://maven.minecraftforge.net") }
+    maven {
+        url = uri('https://jitpack.io')
+        content {
+            includeGroupByRegex 'com\\.github\\..*'
+        }
+    }
     maven {
         url = uri("https://maven.pkg.github.com/Robak132/LibGui-Forge")
         credentials {
@@ -34,14 +37,15 @@ repositories {
     mavenCentral()
 }
 
-def modProperties = new Properties()
-file('gradle.properties').withInputStream { stream ->
-    modProperties.load(stream)
+ant.property(file: project.file('gradle.properties'), prefix: 'mod')
+def getModProperty = { key ->
+    ant.properties["mod.${key}"] ?: providers.gradleProperty(key).get()
 }
+def modId = getModProperty('mod_id')
 
-version = modProperties.getProperty('mod_version')
-group = modProperties.getProperty('maven_group')
-base.archivesName = modProperties.getProperty('archives_base_name')
+version = getModProperty('mod_version')
+group = getModProperty('maven_group')
+base.archivesName = getModProperty('archives_base_name')
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -66,7 +70,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                "${modProperties.getProperty('mod_id')}" {
+                "${modId}" {
                     source sourceSets.main
                 }
             }
@@ -75,25 +79,25 @@ minecraft {
         client {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.enabledGameTestNamespaces', modProperties.getProperty('mod_id')
+            property 'forge.enabledGameTestNamespaces', modId
         }
 
         server {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.enabledGameTestNamespaces', modProperties.getProperty('mod_id')
+            property 'forge.enabledGameTestNamespaces', modId
         }
 
         gameTestServer {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.enabledGameTestNamespaces', modProperties.getProperty('mod_id')
+            property 'forge.enabledGameTestNamespaces', modId
         }
 
         data {
             workingDirectory project.file('run-data')
 
-            args '--mod', modProperties.getProperty('mod_id'), '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', modId, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
 }
@@ -101,13 +105,12 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
+    implementation 'org.projectlombok:lombok:1.18.42'
     minecraft("net.minecraftforge:forge:1.20.1-47.4.0")
-    if (findProject(':LibGui-Forge') != null) {
-        api project(':LibGui-Forge')
-    } else {
-        api fg.deobf("io.github.robak132:libgui_forge:8.1.4")
-    }
+    api project(':LibGui-Forge')
     api fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.136")
+    compileOnly fg.deobf("dev.emi:emi-forge:1.1.24+1.20.1")
+    runtimeOnly fg.deobf("dev.emi:emi-forge:1.1.24+1.20.1")
 
     compileOnly("org.projectlombok:lombok:1.18.42")
     annotationProcessor("org.projectlombok:lombok:1.18.42")
@@ -117,8 +120,8 @@ dependencies {
 
 // Proper Mixin setup for Forge
 mixin {
-//    add sourceSets.main, 'mixins.mcrgb_forge.refmap.json'
-//    config 'mixins.mcrgb_forge.json'
+    add sourceSets.main, 'mixins.mcrgb_forge.refmap.json'
+    config 'mixins.mcrgb_forge.json'
 
     debug.verbose = true
     debug.export = true

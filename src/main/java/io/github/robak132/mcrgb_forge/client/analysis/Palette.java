@@ -1,11 +1,13 @@
 package io.github.robak132.mcrgb_forge.client.analysis;
 
-import io.github.robak132.mcrgb_forge.colors.RGB;
+import io.github.robak132.libgui_forge.widget.data.colors.RGB;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class Palette {
 
     List<RGB> colorList = new ArrayList<>();

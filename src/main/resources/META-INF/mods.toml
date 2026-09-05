@@ -1,32 +1,39 @@
-modLoader="javafml"
-loaderVersion="[47,)"
-license="MIT"
-issueTrackerURL="https://github.com/Robak132/MCRGB/issues"
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/Robak132/MCRGB/issues"
 
 [[mods]]
-modId="mcrgb_forge"
-version="0.3.1"
-displayName="MCRGB: Forgified"
-description="Forge fork of MCRGB - Color Picker for Minecraft Blocks!"
-authors="Robak132, Bacco"
+modId = "mcrgb_forge"
+version = "0.3.1"
+displayName = "MCRGB: Forgified"
+description = "Forge fork of MCRGB - Color Picker for Minecraft Blocks!"
+authors = "Robak132, Bacco"
 
 [[dependencies.mcrgb_forge]]
-modId="forge"
-mandatory=true
-versionRange="[47,)"
-ordering="NONE"
-side="BOTH"
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
 
 [[dependencies.mcrgb_forge]]
-modId="minecraft"
-mandatory=true
-versionRange="[1.20.1]"
-ordering="NONE"
-side="BOTH"
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1]"
+ordering = "NONE"
+side = "BOTH"
 
 [[dependencies.mcrgb_forge]]
-modId="libgui_forge"
-mandatory=true
-versionRange="[8.1.4,)"
-ordering="NONE"
-side="BOTH"
+modId = "libgui_forge"
+mandatory = true
+versionRange = "[8.1.4,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.mcrgb_forge]]
+modId = "emi"
+mandatory = false
+versionRange = "[1.1.24,)"
+ordering = "AFTER"
+side = "CLIENT"

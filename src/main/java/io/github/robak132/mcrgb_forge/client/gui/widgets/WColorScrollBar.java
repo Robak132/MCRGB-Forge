@@ -5,6 +5,7 @@ import io.github.robak132.libgui_forge.widget.data.InputResult;
 import net.minecraft.core.Direction;
 
 public class WColorScrollBar extends WScrollBar {
+
     Runnable runnable;
 
     public WColorScrollBar(Runnable runnable) {

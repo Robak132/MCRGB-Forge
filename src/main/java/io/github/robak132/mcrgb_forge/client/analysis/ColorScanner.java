@@ -1,6 +1,7 @@
 package io.github.robak132.mcrgb_forge.client.analysis;
 
-import io.github.robak132.mcrgb_forge.colors.RGB;
+import io.github.robak132.libgui_forge.widget.data.colors.RGB;
+import io.github.robak132.mcrgb_forge.config.MCRGBConfig;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,9 +31,9 @@ public class ColorScanner {
     private static final Minecraft mc = Minecraft.getInstance();
     private static final RandomSource random = RandomSource.create();
 
-    private final int K_VALUE = 5;
-    private final int MAX_ITERS = 8;
-    private final int SAMPLE_LIMIT = 4096;
+    private static final int K_VALUE = 5;
+    private static final int MAX_ITERS = 8;
+    private static final int SAMPLE_LIMIT = 4096;
 
     /**
      * Extracts all model sprites of a block.
@@ -56,6 +57,11 @@ public class ColorScanner {
         List<Direction> dirs = new ArrayList<>(Arrays.asList(Direction.values()));
         dirs.add(null);
         return dirs;
+    }
+
+    @SuppressWarnings("resource")
+    private static String getSpriteName(TextureAtlasSprite sprite) {
+        return sprite.contents().name().getPath();
     }
 
     /**
@@ -89,9 +95,14 @@ public class ColorScanner {
                     continue;
                 }
 
-                List<SpriteColor> clustered = ColorClustering.kMeansOkLab(pixels, K_VALUE, MAX_ITERS, SAMPLE_LIMIT);
+                List<SpriteColor> clustered = switch (MCRGBConfig.COLOR_CALCULATION_MODE.get()) {
+                    case OKLAB -> ColorClustering.kMeansOkLab(pixels, K_VALUE, MAX_ITERS, SAMPLE_LIMIT);
+                    case FABRIC -> ColorClustering.fabric(pixels);
+                    case MEAN -> ColorClustering.mean(pixels);
+                    case MEDIAN -> ColorClustering.median(pixels);
+                };
 
-                spriteDetailsList.add(new SpriteDetails(sprite.contents().name().getPath(), clustered));
+                spriteDetailsList.add(new SpriteDetails(getSpriteName(sprite), clustered));
             }
 
             result.put(block, spriteDetailsList);
@@ -103,16 +114,20 @@ public class ColorScanner {
     /**
      * Extracts visible pixel colors from a sprite.
      */
+    @SuppressWarnings("resource")
     private List<RGB> getSpritePixels(TextureAtlasSprite sprite) {
         List<RGB> pixels = new ArrayList<>();
-        int w = sprite.contents().width();
-        int h = sprite.contents().height();
+        var contents = sprite.contents();
+        int w = contents.width();
+        int h = contents.height();
 
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 int argb = sprite.getPixelRGBA(0, x, y);
-                RGB rgb = new RGB(argb);
-                if (rgb.alpha() == 0) continue;
+                RGB rgb = new RGB((argb >>> 24) & 0xFF, argb & 0xFF, (argb >>> 8) & 0xFF, (argb >>> 16) & 0xFF);
+                if (rgb.alpha() == 0) {
+                    continue;
+                }
                 pixels.add(rgb);
             }
         }
@@ -120,5 +135,7 @@ public class ColorScanner {
         return pixels;
     }
 
-    public record ScanResult(Map<Block, List<SpriteDetails>> blockSprites) {}
+    public record ScanResult(Map<Block, List<SpriteDetails>> blockSprites) {
+
+    }
 }

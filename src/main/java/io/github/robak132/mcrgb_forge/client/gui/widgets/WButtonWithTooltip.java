@@ -6,7 +6,8 @@ import io.github.robak132.libgui_forge.widget.icon.Icon;
 import net.minecraft.network.chat.Component;
 
 public class WButtonWithTooltip extends WButton {
-    Component tooltipComponent;
+
+    private final Component tooltipComponent;
 
     public WButtonWithTooltip(Icon icon, Component tooltipComponent) {
         super(icon);

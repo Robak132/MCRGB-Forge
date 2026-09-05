@@ -3,9 +3,12 @@ package io.github.robak132.mcrgb_forge.client.gui.widgets;
 import static io.github.robak132.mcrgb_forge.MCRGBMod.MOD_ID;
 
 import io.github.robak132.libgui_forge.client.BackgroundPainter;
+import io.github.robak132.libgui_forge.widget.WColorSwatch;
 import io.github.robak132.libgui_forge.widget.WPlainPanel;
 import io.github.robak132.libgui_forge.widget.data.HorizontalAlignment;
+import io.github.robak132.libgui_forge.widget.data.colors.RGB;
 import io.github.robak132.libgui_forge.widget.icon.TextureIcon;
+import io.github.robak132.mcrgb_forge.client.Localisation;
 import io.github.robak132.mcrgb_forge.client.analysis.Palette;
 import io.github.robak132.mcrgb_forge.client.gui.AbstractGuiDescription;
 import java.util.ArrayList;
@@ -16,19 +19,20 @@ import net.minecraft.resources.ResourceLocation;
 public class WPaletteWidget extends WPlainPanel {
 
     int slotsWidth = 9;
-    ArrayList<WColorPreviewIcon> savedColors = new ArrayList<>();
+    ArrayList<WColorSwatch> savedColors = new ArrayList<>();
     Palette palette;
     AbstractGuiDescription cg;
-    WSmallButton editButton = new WSmallButton(new TextureIcon(ResourceLocation.fromNamespaceAndPath(MOD_ID, "edit.png")),
-            Component.translatable("ui.mcrgb_forge.edit_palette_info"));
-    WSmallButton deleteButton = new WSmallButton(new TextureIcon(ResourceLocation.fromNamespaceAndPath(MOD_ID, "delete.png")),
-            Component.translatable("ui.mcrgb_forge.delete_palette_info"));
+    WButtonWithTooltip editButton = new WButtonWithTooltip(new TextureIcon(ResourceLocation.fromNamespaceAndPath(MOD_ID, "edit.png")),
+            Component.translatable(Localisation.UI_EDIT_PALETTE_INFO));
+    WButtonWithTooltip deleteButton = new WButtonWithTooltip(new TextureIcon(ResourceLocation.fromNamespaceAndPath(MOD_ID, "delete.png")),
+            Component.translatable(Localisation.UI_DELETE_PALETTE_INFO));
 
     public void buildPaletteWidget(AbstractGuiDescription cg) {
 
         this.setBackgroundPainter(BackgroundPainter.createColorful(0xFFFFFF));
         for (int i = 0; i < slotsWidth; i++) {
-            savedColors.add(new WColorPreviewIcon(ResourceLocation.fromNamespaceAndPath(MOD_ID, "square.png"), cg));
+            savedColors.add(new WColorSwatch(ResourceLocation.fromNamespaceAndPath(MOD_ID, "square.png"),
+                    () -> cg.activeColor.argb(), color -> cg.setColor(new RGB(color))));
             savedColors.get(i).setInteractable(false);
             this.add(savedColors.get(i), i * 17, 0, 18, 18);
         }

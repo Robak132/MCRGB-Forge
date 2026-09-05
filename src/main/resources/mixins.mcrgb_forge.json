@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_17",
+  "package": "io.github.robak132.mcrgb_forge.mixin",
+  "refmap": "mixins.mcrgb_forge.refmap.json",
+  "client": [
+    "EmiSearchMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -2,10 +2,13 @@ package io.github.robak132.mcrgb_forge.client.analysis;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class SpriteDetails {
+
     private String name;
     private List<SpriteColor> colors;
 

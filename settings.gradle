@@ -9,3 +9,9 @@ pluginManagement {
 }
 
 rootProject.name = 'MCRGB-Forge'
+
+def libGuiProjectDir = file('../LibGui-Forge')
+if (libGuiProjectDir.isDirectory()) {
+    include 'LibGui-Forge'
+    project(':LibGui-Forge').projectDir = libGuiProjectDir
+}

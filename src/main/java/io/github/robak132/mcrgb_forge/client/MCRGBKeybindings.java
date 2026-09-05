@@ -14,14 +14,17 @@ import org.lwjgl.glfw.GLFW;
 @Mod.EventBusSubscriber(modid = MOD_ID, bus = Bus.MOD, value = Dist.CLIENT)
 public final class MCRGBKeybindings {
 
-    public static final String KEY_CATEGORY_MCRGB = "key.category.mcrgb_forge.mcrgb_forge";
+    public static final KeyMapping OPEN_GUI = new KeyMapping(
+            Localisation.KEY_OPEN_GUI, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, Localisation.KEY_CATEGORY);
+    public static final KeyMapping QUICK_SEARCH = new KeyMapping(
+            Localisation.KEY_QUICK_SEARCH, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_O, Localisation.KEY_CATEGORY);
 
-    public static final KeyMapping OPEN_GUI = new KeyMapping("key.mcrgb_forge.color_inv_open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY_MCRGB);
-
-    private MCRGBKeybindings() {}
+    private MCRGBKeybindings() {
+    }
 
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(OPEN_GUI);
+        event.register(QUICK_SEARCH);
     }
 }

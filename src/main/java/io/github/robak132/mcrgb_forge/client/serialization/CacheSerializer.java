@@ -2,19 +2,19 @@ package io.github.robak132.mcrgb_forge.client.serialization;
 
 import com.google.common.reflect.TypeToken;
 import io.github.robak132.mcrgb_forge.client.analysis.SpriteDetails;
-import lombok.extern.slf4j.Slf4j;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @Slf4j(topic = "MCRGB")
 public class CacheSerializer implements Serializer<Map<Block, List<SpriteDetails>>> {
@@ -25,15 +25,16 @@ public class CacheSerializer implements Serializer<Map<Block, List<SpriteDetails
 
     public Map<Block, List<SpriteDetails>> load() {
         if (!exists()) {
-            return null;
+            return Collections.emptyMap();
         }
 
         try (Reader reader = Files.newBufferedReader(getFile())) {
-            var rawType = new TypeToken<Map<String, List<SpriteDetails>>>() {}.getType();
+            var rawType = new TypeToken<Map<String, List<SpriteDetails>>>() {
+            }.getType();
             Map<String, List<SpriteDetails>> raw = GSON.fromJson(reader, rawType);
 
             if (raw == null || raw.isEmpty()) {
-                return null;
+                return Collections.emptyMap();
             }
 
             Map<Block, List<SpriteDetails>> mapped = new HashMap<>();
@@ -50,14 +51,14 @@ public class CacheSerializer implements Serializer<Map<Block, List<SpriteDetails
                 }
             }
 
-            return mapped.isEmpty() ? null : mapped;
+            return mapped.isEmpty() ? Collections.emptyMap() : mapped;
 
         } catch (Exception e) {
             log.error("Failed to load cache: {}", e.getMessage());
-            return null;
+            return Collections.emptyMap();
         }
     }
-    
+
     @Override
     public void save(Map<Block, List<SpriteDetails>> data) {
         try {
