@@ -4,9 +4,11 @@ import io.github.robak132.libgui_forge.widget.data.colors.OkLAB;
 import io.github.robak132.libgui_forge.widget.data.colors.RGB;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.ToIntFunction;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 
 /**
  * Simple K-means using OKLab distance. Returns list of Sprite (mean + weight%).
@@ -28,37 +30,32 @@ public final class ColorClustering {
         if (pixels.isEmpty()) {
             return List.of();
         }
+        if (k <= 0 || maxIters <= 0 || sampleLimit <= 0) {
+            throw new IllegalArgumentException("k, maxIters and sampleLimit must be positive");
+        }
 
         int boundedSampleLimit = Mth.clamp(sampleLimit, 1, pixels.size());
         List<RGB> sample = pixels;
         if (pixels.size() > boundedSampleLimit) {
             sample = new ArrayList<>(boundedSampleLimit);
-            int step = Math.max(1, pixels.size() / boundedSampleLimit);
-            for (int i = 0; i < pixels.size() && sample.size() < boundedSampleLimit; i += step) {
-                sample.add(pixels.get(i));
+            for (int i = 0; i < boundedSampleLimit; i++) {
+                int index = (int) ((long) i * pixels.size() / boundedSampleLimit);
+                sample.add(pixels.get(index));
             }
         }
 
         final int n = sample.size();
-        final int clusters = Math.min(k, n);
 
         OkLAB[] okLab = new OkLAB[n];
+        float[] sampleWeights = new float[n];
         for (int i = 0; i < n; i++) {
             RGB cv = sample.get(i);
             okLab[i] = cv.toOkLAB();
+            sampleWeights[i] = cv.alpha() / 255f;
         }
 
-        RandomSource rnd = RandomSource.create();
-        List<OkLAB> centers = new ArrayList<>(clusters);
-        boolean[] used = new boolean[n];
-        for (int i = 0; i < clusters; i++) {
-            int idx;
-            do {
-                idx = rnd.nextInt(n);
-            } while (used[idx]);
-            used[idx] = true;
-            centers.add(new OkLAB(okLab[idx]));
-        }
+        List<OkLAB> centers = initializeCenters(okLab, sampleWeights, Math.min(k, n));
+        final int clusters = centers.size();
 
         int[] assignments = new int[n];
         boolean changed = true;
@@ -66,13 +63,12 @@ public final class ColorClustering {
         for (int iter = 0; iter < maxIters && changed; iter++) {
             changed = false;
 
-            // assignment step
             for (int i = 0; i < n; i++) {
                 double bestDist = Double.MAX_VALUE;
                 int best = 0;
                 OkLAB p = okLab[i];
                 for (int c = 0; c < centers.size(); c++) {
-                    double d = p.distanceWeighted(centers.get(c));
+                    double d = p.distanceSquared(centers.get(c));
                     if (d < bestDist) {
                         bestDist = d;
                         best = c;
@@ -84,21 +80,22 @@ public final class ColorClustering {
                 }
             }
 
-            // update step: compute new centers as mean of assigned OKLab coords
-            int[] counts = new int[clusters];
+            float[] clusterWeights = new float[clusters];
             float[][] sums = new float[clusters][3];
             for (int i = 0; i < n; i++) {
                 int c = assignments[i];
                 OkLAB p = okLab[i];
-                counts[c]++;
+                float weight = sampleWeights[i];
+                clusterWeights[c] += weight;
 
-                sums[c][0] += p.lightness();
-                sums[c][1] += p.greenRedAxis();
-                sums[c][2] += p.blueYellowAxis();
+                sums[c][0] += p.lightness() * weight;
+                sums[c][1] += p.greenRedAxis() * weight;
+                sums[c][2] += p.blueYellowAxis() * weight;
             }
             for (int c = 0; c < clusters; c++) {
-                if (counts[c] > 0) {
-                    centers.set(c, new OkLAB(255, sums[c][0] / counts[c], sums[c][1] / counts[c], sums[c][2] / counts[c]));
+                if (clusterWeights[c] > 0) {
+                    centers.set(c, new OkLAB(255, sums[c][0] / clusterWeights[c],
+                            sums[c][1] / clusterWeights[c], sums[c][2] / clusterWeights[c]));
                 }
             }
         }
@@ -111,14 +108,14 @@ public final class ColorClustering {
             double bestD = Float.MAX_VALUE;
 
             for (int c = 0; c < clusters; c++) {
-                double d = p.distanceWeighted(centers.get(c));
+                double d = p.distanceSquared(centers.get(c));
                 if (d < bestD) {
                     bestD = d;
                     best = c;
                 }
             }
 
-            float alphaWeight = 1f + (cv.alpha() / 255f) * 4f;
+            float alphaWeight = cv.alpha() / 255f;
             fullCounts[best] += alphaWeight;
         }
 
@@ -126,19 +123,80 @@ public final class ColorClustering {
         for (float v : fullCounts) {
             totalWeight += v;
         }
+        if (totalWeight <= 0f) {
+            return List.of();
+        }
 
+        int[] percentages = percentages(fullCounts, totalWeight);
         for (int c = 0; c < clusters; c++) {
             if (fullCounts[c] == 0) {
                 continue;
             }
             OkLAB center = centers.get(c);
             RGB mean = center.toRGB();
-            int weight = Mth.clamp(Math.round((fullCounts[c] / totalWeight) * 100f), 0, 100);
-            result.add(new SpriteColor(mean, weight));
+            result.add(new SpriteColor(mean, percentages[c]));
         }
 
         result.sort((a, b) -> Integer.compare(b.weight(), a.weight()));
         return result;
+    }
+
+    private static List<OkLAB> initializeCenters(OkLAB[] pixels, float[] weights, int requestedClusters) {
+        List<OkLAB> centers = new ArrayList<>(requestedClusters);
+        int first = closestToMean(pixels, weights);
+        centers.add(new OkLAB(pixels[first]));
+
+        while (centers.size() < requestedClusters) {
+            int farthest = -1;
+            double farthestDistance = 0.0;
+            for (int i = 0; i < pixels.length; i++) {
+                double nearestDistance = Double.MAX_VALUE;
+                for (OkLAB center : centers) {
+                    nearestDistance = Math.min(nearestDistance, pixels[i].distanceSquared(center));
+                }
+                double weightedDistance = nearestDistance * weights[i];
+                if (weightedDistance > farthestDistance) {
+                    farthestDistance = weightedDistance;
+                    farthest = i;
+                }
+            }
+            if (farthest < 0) {
+                break;
+            }
+            centers.add(new OkLAB(pixels[farthest]));
+        }
+        return centers;
+    }
+
+    private static int closestToMean(OkLAB[] pixels, float[] weights) {
+        double lightness = 0.0;
+        double greenRed = 0.0;
+        double blueYellow = 0.0;
+        double totalWeight = 0.0;
+        for (int i = 0; i < pixels.length; i++) {
+            lightness += pixels[i].lightness() * weights[i];
+            greenRed += pixels[i].greenRedAxis() * weights[i];
+            blueYellow += pixels[i].blueYellowAxis() * weights[i];
+            totalWeight += weights[i];
+        }
+        if (totalWeight == 0.0) {
+            return 0;
+        }
+        OkLAB mean = new OkLAB(255, (float) (lightness / totalWeight),
+                (float) (greenRed / totalWeight), (float) (blueYellow / totalWeight));
+        int closest = 0;
+        double closestDistance = Double.MAX_VALUE;
+        for (int i = 0; i < pixels.length; i++) {
+            if (weights[i] <= 0f) {
+                continue;
+            }
+            double distance = pixels[i].distanceSquared(mean);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = i;
+            }
+        }
+        return closest;
     }
 
     /**
@@ -150,9 +208,10 @@ public final class ColorClustering {
         }
 
         List<List<RGB>> groups = new ArrayList<>();
+        Set<Integer> groupedColors = new HashSet<>();
         for (int i = 0; i < pixels.size(); i++) {
             RGB seed = pixels.get(i);
-            if (containsColor(groups, seed)) {
+            if (groupedColors.contains(seed.rgb())) {
                 continue;
             }
 
@@ -160,48 +219,49 @@ public final class ColorClustering {
             group.add(seed);
             for (int j = i + 1; j < pixels.size(); j++) {
                 RGB candidate = pixels.get(j);
-                if (rgbDistanceSquared(candidate, seed) < 100 * 100 && !containsColor(groups, candidate)) {
+                if (candidate.distanceSquared(seed) < 100 * 100 && !groupedColors.contains(candidate.rgb())) {
                     group.add(candidate);
                 }
             }
+            group.forEach(color -> groupedColors.add(color.rgb()));
             groups.add(group);
         }
 
         List<SpriteColor> result = new ArrayList<>(groups.size());
-        for (List<RGB> group : groups) {
-            long red = 0;
-            long green = 0;
-            long blue = 0;
+        float[] groupWeights = new float[groups.size()];
+        RGB[] means = new RGB[groups.size()];
+        float totalWeight = 0f;
+        for (int i = 0; i < groups.size(); i++) {
+            List<RGB> group = groups.get(i);
+            double red = 0;
+            double green = 0;
+            double blue = 0;
+            float groupWeight = 0f;
             for (RGB pixel : group) {
-                red += pixel.red();
-                green += pixel.green();
-                blue += pixel.blue();
+                float alphaWeight = pixel.alpha() / 255f;
+                red += pixel.red() * alphaWeight;
+                green += pixel.green() * alphaWeight;
+                blue += pixel.blue() * alphaWeight;
+                groupWeight += alphaWeight;
             }
-
-            int count = group.size();
-            RGB mean = new RGB((int) (red / count), (int) (green / count), (int) (blue / count));
-            int weight = (int) ((float) count / pixels.size() * 100f);
-            result.add(new SpriteColor(mean, weight));
+            groupWeights[i] = groupWeight;
+            totalWeight += groupWeight;
+            if (groupWeight > 0f) {
+                means[i] = new RGB((int) Math.round(red / groupWeight),
+                        (int) Math.round(green / groupWeight), (int) Math.round(blue / groupWeight));
+            }
         }
+        if (totalWeight <= 0f) {
+            return List.of();
+        }
+        int[] percentages = percentages(groupWeights, totalWeight);
+        for (int i = 0; i < groups.size(); i++) {
+            if (means[i] != null) {
+                result.add(new SpriteColor(means[i], percentages[i]));
+            }
+        }
+        result.sort((a, b) -> Integer.compare(b.weight(), a.weight()));
         return result;
-    }
-
-    private static boolean containsColor(List<List<RGB>> groups, RGB color) {
-        for (List<RGB> group : groups) {
-            for (RGB grouped : group) {
-                if (grouped.red() == color.red() && grouped.green() == color.green() && grouped.blue() == color.blue()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static int rgbDistanceSquared(RGB first, RGB second) {
-        int red = first.red() - second.red();
-        int green = first.green() - second.green();
-        int blue = first.blue() - second.blue();
-        return red * red + green * green + blue * blue;
     }
 
     public static List<SpriteColor> mean(List<RGB> pixels) {
@@ -209,20 +269,25 @@ public final class ColorClustering {
             return List.of();
         }
 
-        long red = 0;
-        long green = 0;
-        long blue = 0;
+        double red = 0;
+        double green = 0;
+        double blue = 0;
+        double totalWeight = 0;
         for (RGB pixel : pixels) {
-            red += pixel.red();
-            green += pixel.green();
-            blue += pixel.blue();
+            double alphaWeight = pixel.alpha() / 255.0;
+            red += pixel.red() * alphaWeight;
+            green += pixel.green() * alphaWeight;
+            blue += pixel.blue() * alphaWeight;
+            totalWeight += alphaWeight;
+        }
+        if (totalWeight == 0) {
+            return List.of();
         }
 
-        int size = pixels.size();
         return List.of(new SpriteColor(new RGB(
-                meanChannel(red, size),
-                meanChannel(green, size),
-                meanChannel(blue, size)), 100));
+                meanChannel(red, totalWeight),
+                meanChannel(green, totalWeight),
+                meanChannel(blue, totalWeight)), 100));
     }
 
     public static List<SpriteColor> median(List<RGB> pixels) {
@@ -230,25 +295,64 @@ public final class ColorClustering {
             return List.of();
         }
 
-        List<Integer> reds = pixels.stream().map(RGB::red).sorted(Comparator.naturalOrder()).toList();
-        List<Integer> greens = pixels.stream().map(RGB::green).sorted(Comparator.naturalOrder()).toList();
-        List<Integer> blues = pixels.stream().map(RGB::blue).sorted(Comparator.naturalOrder()).toList();
-        int middle = pixels.size() / 2;
+        double totalWeight = pixels.stream().mapToDouble(pixel -> pixel.alpha() / 255.0).sum();
+        if (totalWeight == 0.0) {
+            return List.of();
+        }
 
         return List.of(new SpriteColor(new RGB(
-                medianChannel(reds, middle),
-                medianChannel(greens, middle),
-                medianChannel(blues, middle)), 100));
+                medianChannel(pixels, RGB::red, totalWeight),
+                medianChannel(pixels, RGB::green, totalWeight),
+                medianChannel(pixels, RGB::blue, totalWeight)), 100));
     }
 
-    private static int medianChannel(List<Integer> values, int middle) {
-        if (values.size() % 2 == 1) {
-            return values.get(middle);
+    private static int medianChannel(List<RGB> pixels, ToIntFunction<RGB> channel, double totalWeight) {
+        List<RGB> sorted = pixels.stream().sorted(Comparator.comparingInt(channel)).toList();
+        double midpoint = totalWeight / 2.0;
+        double cumulativeWeight = 0.0;
+        for (int i = 0; i < sorted.size(); i++) {
+            RGB pixel = sorted.get(i);
+            cumulativeWeight += pixel.alpha() / 255.0;
+            if (cumulativeWeight > midpoint) {
+                return channel.applyAsInt(pixel);
+            }
+            if (Math.abs(cumulativeWeight - midpoint) < 1.0e-9) {
+                for (int j = i + 1; j < sorted.size(); j++) {
+                    if (sorted.get(j).alpha() > 0) {
+                        return Math.round((channel.applyAsInt(pixel) + channel.applyAsInt(sorted.get(j))) / 2f);
+                    }
+                }
+                return channel.applyAsInt(pixel);
+            }
         }
-        return Mth.clamp(Math.round((values.get(middle - 1) + values.get(middle)) / 2f), 0, 255);
+        return channel.applyAsInt(sorted.get(sorted.size() - 1));
     }
 
-    private static int meanChannel(long total, int count) {
-        return Mth.clamp((int) Math.round((double) total / count), 0, 255);
+    private static int meanChannel(double total, double weight) {
+        return Mth.clamp((int) Math.round(total / weight), 0, 255);
+    }
+
+    private static int[] percentages(float[] weights, float totalWeight) {
+        int[] result = new int[weights.length];
+        double[] remainders = new double[weights.length];
+        int assigned = 0;
+        for (int i = 0; i < weights.length; i++) {
+            double exact = weights[i] / totalWeight * 100.0;
+            result[i] = (int) Math.floor(exact);
+            remainders[i] = exact - result[i];
+            assigned += result[i];
+        }
+        while (assigned < 100) {
+            int largestRemainder = 0;
+            for (int i = 1; i < remainders.length; i++) {
+                if (remainders[i] > remainders[largestRemainder]) {
+                    largestRemainder = i;
+                }
+            }
+            result[largestRemainder]++;
+            remainders[largestRemainder] = -1.0;
+            assigned++;
+        }
+        return result;
     }
 }

@@ -14,8 +14,10 @@ public class MCRGBMod {
     public static final String MOD_ID = "mcrgb_forge";
 
     public MCRGBMod(FMLJavaModLoadingContext context) {
+        log.info("Initializing {} (client color analysis mod)", MOD_ID);
         MinecraftForge.EVENT_BUS.register(this);
         context.registerConfig(ModConfig.Type.CLIENT, MCRGBConfig.GENERAL_SPEC, "mcrgb_forge.toml");
+        log.debug("Registered Forge event bus and client config mcrgb_forge.toml");
     }
 
 }

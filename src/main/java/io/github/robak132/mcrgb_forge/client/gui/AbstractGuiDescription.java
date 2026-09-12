@@ -1,7 +1,7 @@
 package io.github.robak132.mcrgb_forge.client.gui;
 
 import static io.github.robak132.mcrgb_forge.MCRGBMod.MOD_ID;
-import static io.github.robak132.mcrgb_forge.client.utils.TypeConversionUtils.hexToInt;
+import static io.github.robak132.mcrgb_forge.client.utils.Utils.hexToInt;
 
 import io.github.robak132.libgui_forge.gui.LightweightGuiDescription;
 import io.github.robak132.libgui_forge.widget.WGridPanel;
@@ -24,10 +24,9 @@ import net.minecraft.world.item.ItemStack;
 
 public abstract class AbstractGuiDescription extends LightweightGuiDescription {
 
-    private static final Pattern HEX_INPUT_PATTERN = Pattern.compile("#?[0-9A-Fa-f]{0,6}");
-
     static final int SLOTS_HEIGHT = 7;
     static final int SLOTS_WIDTH = 9;
+    private static final Pattern HEX_INPUT_PATTERN = Pattern.compile("#?[0-9A-Fa-f]{0,6}");
     public final WGridPanel root = new WGridPanel();
     public final WGridPanel mainPanel = new WGridPanel();
     public final WSavedPalettesArea savedPalettesArea = new WSavedPalettesArea(this, SLOTS_WIDTH, SLOTS_HEIGHT);

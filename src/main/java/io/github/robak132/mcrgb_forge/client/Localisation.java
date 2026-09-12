@@ -4,19 +4,21 @@ import java.util.Locale;
 
 public final class Localisation {
 
-    public static final String UI_R_FOR_RED = "ui.mcrgb_forge.r_for_red";
-    public static final String UI_G_FOR_GREEN = "ui.mcrgb_forge.g_for_green";
-    public static final String UI_B_FOR_BLUE = "ui.mcrgb_forge.b_for_blue";
-    public static final String UI_H_FOR_HUE_HSV = "ui.mcrgb_forge.h_for_hue_hsv";
-    public static final String UI_S_FOR_SAT_HSV = "ui.mcrgb_forge.s_for_sat_hsv";
-    public static final String UI_V_FOR_VAL_HSV = "ui.mcrgb_forge.v_for_val_hsv";
-    public static final String UI_H_FOR_HUE_HSL = "ui.mcrgb_forge.h_for_hue_hsl";
-    public static final String UI_S_FOR_SAT_HSL = "ui.mcrgb_forge.s_for_sat_hsl";
-    public static final String UI_L_FOR_LIT_HSL = "ui.mcrgb_forge.l_for_lit_hsl";
+    public static final String UI_R = "ui.mcrgb_forge.r";
+    public static final String UI_G = "ui.mcrgb_forge.g";
+    public static final String UI_B = "ui.mcrgb_forge.b";
+    public static final String UI_H = "ui.mcrgb_forge.h";
+    public static final String UI_S = "ui.mcrgb_forge.s";
+    public static final String UI_V = "ui.mcrgb_forge.v";
+    public static final String UI_L = "ui.mcrgb_forge.l";
     public static final String UI_RGB = "ui.mcrgb_forge.rgb";
     public static final String UI_HSV = "ui.mcrgb_forge.hsv";
     public static final String UI_HSL = "ui.mcrgb_forge.hsl";
     public static final String UI_REFINE = "ui.mcrgb_forge.refine";
+    public static final String UI_NOISE = "ui.mcrgb_forge.noise";
+    public static final String UI_SPATIAL = "ui.mcrgb_forge.spatial";
+    public static final String UI_BLOCK_PROGRESS = "ui.mcrgb_forge.block_progress";
+    public static final String UI_EMI = "ui.mcrgb_forge.emi";
     public static final String UI_REFRESH_INFO = "ui.mcrgb_forge.refresh_info";
     public static final String UI_HEADER = "ui.mcrgb_forge.header";
     public static final String UI_SAVED_COLORS = "ui.mcrgb_forge.saved_colors";
@@ -29,7 +31,6 @@ public final class Localisation {
     public static final String OPTION_ALWAYS_SHOW_TOOLTIPS = "option.mcrgb_forge.always_show_in_tooltips";
     public static final String OPTION_MAX_TOOLTIP_LINES = "option.mcrgb_forge.max_tooltip_lines";
     public static final String OPTION_SLIDER_CONSTANT_UPDATE = "option.mcrgb_forge.slider_constant_update";
-    public static final String OPTION_READ_JSON_FILE = "option.mcrgb_forge.read_json_file";
     public static final String OPTION_COLOR_MODE = "option.mcrgb_forge.color_mode";
     public static final String OPTION_ITEM_SPAWNING_MODE = "option.mcrgb_forge.item_spawning_mode";
     public static final String OPTION_GIVE_COMMAND = "option.mcrgb_forge.give_command";
@@ -42,7 +43,6 @@ public final class Localisation {
     public static final String TOOLTIP_ALWAYS_SHOW_TOOLTIPS = "tooltip.mcrgb_forge.always_show_in_tooltips";
     public static final String TOOLTIP_MAX_TOOLTIP_LINES = "tooltip.mcrgb_forge.max_tooltip_lines";
     public static final String TOOLTIP_SLIDER_CONSTANT_UPDATE = "tooltip.mcrgb_forge.slider_constant_update";
-    public static final String TOOLTIP_READ_JSON_FILE = "tooltip.mcrgb_forge.read_json_file";
     public static final String TOOLTIP_COLOR_MODE = "tooltip.mcrgb_forge.color_mode";
     public static final String TOOLTIP_ITEM_SPAWNING_MODE = "tooltip.mcrgb_forge.item_spawning_mode";
     public static final String TOOLTIP_GIVE_COMMAND = "tooltip.mcrgb_forge.give_command";
@@ -52,13 +52,14 @@ public final class Localisation {
     public static final String TOOLTIP_SHOW_MORE = "tooltip.mcrgb_forge.show_more";
 
     public static final String TOAST_TITLE = "toast.mcrgb_forge.title";
+    public static final String TOAST_CACHE_LOADING = "toast.mcrgb_forge.cache_loading";
     public static final String TOAST_CACHE_LOADED = "toast.mcrgb_forge.cache_loaded";
     public static final String TOAST_SCAN_STARTED = "toast.mcrgb_forge.scan_started";
     public static final String TOAST_SCAN_IN_PROGRESS = "toast.mcrgb_forge.scan_in_progress";
+    public static final String TOAST_WAITING_FOR_EMI = "toast.mcrgb_forge.waiting_for_emi";
     public static final String TOAST_RELOADED = "toast.mcrgb_forge.reloaded";
     public static final String TOAST_COPIED_HEX_TO_CLIPBOARD = "toast.mcrgb_forge.copied_hex_to_clipboard";
 
-    public static final String WARNING_NO_CLOTH_CONFIG = "warning.mcrgb_forge.noclothconfig";
     public static final String KEY_CATEGORY = "key.category.mcrgb_forge.mcrgb_forge";
     public static final String KEY_OPEN_GUI = "key.mcrgb_forge.color_inv_open";
     public static final String KEY_QUICK_SEARCH = "key.mcrgb_forge.quick_search_from_clipboard";

@@ -6,12 +6,15 @@ import io.github.robak132.libgui_forge.widget.WClickableLabel;
 import io.github.robak132.libgui_forge.widget.data.InputResult;
 import io.github.robak132.libgui_forge.widget.data.Insets;
 import io.github.robak132.libgui_forge.widget.data.colors.RGB;
+import io.github.robak132.mcrgb_forge.client.ColorInfoLines;
 import io.github.robak132.mcrgb_forge.client.Localisation;
 import io.github.robak132.mcrgb_forge.client.MCRGBClient;
+import io.github.robak132.mcrgb_forge.client.analysis.SpriteColor;
 import io.github.robak132.mcrgb_forge.client.analysis.SpriteDetails;
+import io.github.robak132.mcrgb_forge.client.analysis.TextureNoise;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntConsumer;
+import java.util.function.BiConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,7 +29,7 @@ public class WBlockInfoBox extends WBox {
 
     int lineCount = 0;
 
-    public WBlockInfoBox(Direction.Plane axis, Item item, IntConsumer onClick) {
+    public WBlockInfoBox(Direction.Plane axis, Item item, BiConsumer<Integer, TextureNoise> onClick) {
         super(axis);
         setInsets(Insets.ROOT_PANEL);
         Block block = Block.byItem(item);
@@ -42,37 +45,25 @@ public class WBlockInfoBox extends WBox {
         }
 
         for (SpriteDetails details : list) {
-            List<String> strings = details.getStrings();
-            List<Integer> colors = details.getTextColors();
-            if (strings.isEmpty()) {
-                continue;
-            }
-
-            for (int j = 0; j < strings.size(); j++) {
-                String s = strings.get(j);
-                int color = colors.get(j);
-                MutableComponent text = Component.literal(s);
-                MutableComponent colorBox = (MutableComponent) Component.literal("⬛").toFlatList(Style.EMPTY.withColor(color)).get(0);
-                Component out;
-                if (j > 0) {
-                    // gray text for subsequent lines
-                    Component grayText = text.toFlatList(Style.EMPTY.withColor(0x707070)).get(0);
-                    out = colorBox.append(grayText);
-                } else {
-                    // title styled in darker gray
-                    out = text.toFlatList(Style.EMPTY.withColor(0x444444)).get(0);
-                }
+            List<Component> lines = ColorInfoLines.linesFor(details);
+            for (int j = 0; j < lines.size(); j++) {
+                Component line = lines.get(j);
                 Font textRenderer = Minecraft.getInstance().font;
-                int width = textRenderer.width(out);
-                WClickableLabel newLabel = new WClickableLabel(out, createHoveredText(out));
-                newLabel.setOnClick(button -> {
-                    if (button == 2) {
-                        copyColorToClipboard(color);
-                    } else {
-                        onClick.accept(color);
-                    }
-                    return InputResult.PROCESSED;
-                });
+                int width = textRenderer.width(line);
+                WClickableLabel newLabel = new WClickableLabel(line, createHoveredText(line));
+                if (ColorInfoLines.isColorLine(details, j)) {
+                    SpriteColor spriteColor = details.getColors()
+                            .get(j - ColorInfoLines.firstColorLineIndex(details));
+                    int color = spriteColor.color().argb();
+                    newLabel.setOnClick(button -> {
+                        if (button == 2) {
+                            copyColorToClipboard(color);
+                        } else {
+                            onClick.accept(color, details.getNoise());
+                        }
+                        return InputResult.PROCESSED;
+                    });
+                }
                 add(newLabel, width, 1);
                 lineCount++;
             }
@@ -100,12 +91,6 @@ public class WBlockInfoBox extends WBox {
                 .append(Component.literal("⬛").withStyle(Style.EMPTY.withColor(color)))
                 .append(Component.literal(hex)));
     }
-
-    /**
-     * Constructs a box.
-     *
-     * @throws NullPointerException if the axis is null
-     */
 
     @Override
     public void paint(GuiGraphics context, int x, int y, int mouseX, int mouseY) {

@@ -15,8 +15,6 @@ public interface Serializer<T> {
         return Files.exists(getFile());
     }
 
-    boolean delete();
-
     T load();
 
     void save(T palettes);

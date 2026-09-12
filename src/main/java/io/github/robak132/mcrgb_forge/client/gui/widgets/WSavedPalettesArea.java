@@ -39,7 +39,6 @@ public class WSavedPalettesArea extends WPlainPanel {
     public WSavedPalettesArea(AbstractGuiDescription gui, int slotsWidth, int slotsHeight) {
         this.cg = gui;
         BiConsumer<Palette, WPaletteWidget> configurator = (Palette p, WPaletteWidget pwig) -> {
-            pwig.cg = cg;
             pwig.palette = p;
             pwig.buildPaletteWidget(cg);
             for (int i = 0; i < pwig.savedColors.size(); i++) {
@@ -69,8 +68,9 @@ public class WSavedPalettesArea extends WPlainPanel {
         paletteList.setBackgroundPainter(BackgroundPainter.createColorful(0x999999));
         paletteList.setListItemHeight(19);
         this.add(paletteList, 0, 2, 10, 3);
-        paletteList.setLocation(0, 36);
-        paletteList.setSize(10 * 18, (int) (2.8f * 18));
+        // The list border lines up with the value-field row in the color picker.
+        paletteList.setLocation(0, 45);
+        paletteList.setSize(10 * 18, 2 * 18);
 
         savePaletteButton.setOnClick(this::savePalette);
 

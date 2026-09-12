@@ -1,8 +1,10 @@
 package io.github.robak132.mcrgb_forge.client.gui.widgets;
 
 import io.github.robak132.libgui_forge.widget.WTextField;
+import io.github.robak132.libgui_forge.widget.data.InputResult;
 import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 public class WSmartTextField extends WTextField {
 
@@ -24,19 +26,26 @@ public class WSmartTextField extends WTextField {
     }
 
     @Override
+    public InputResult onKeyPressed(int ch, int key, int modifiers) {
+        if (ch == GLFW.GLFW_KEY_ENTER || ch == GLFW.GLFW_KEY_KP_ENTER) {
+            commitIfChanged();
+            return InputResult.PROCESSED;
+        }
+        return super.onKeyPressed(ch, key, modifiers);
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
         boolean focused = this.isFocused();
 
-        // Focus gained
         if (focused && !wasFocused) {
             wasFocused = true;
             lastCommittedText = getText();
             return;
         }
 
-        // Focus lost → commit
         if (!focused && wasFocused) {
             wasFocused = false;
             commitIfChanged();
@@ -54,9 +63,6 @@ public class WSmartTextField extends WTextField {
         }
     }
 
-    /**
-     * Programmatic commit (optional utility)
-     */
     public void commit() {
         commitIfChanged();
     }

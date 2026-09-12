@@ -6,17 +6,18 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.ModList;
 
 @Getter
 @Setter
 @Slf4j(topic = MOD_ID)
 public final class MCRGBConfig {
 
+    public static final boolean EMI_LOADED = ModList.get().isLoaded("emi");
     public static final ForgeConfigSpec GENERAL_SPEC;
     public static final ForgeConfigSpec.BooleanValue BYPASS_OP;
     public static final ForgeConfigSpec.BooleanValue ALWAYS_SHOW_TOOLTIPS;
     public static final ForgeConfigSpec.BooleanValue SLIDER_CONSTANT_UPDATE;
-    public static final ForgeConfigSpec.BooleanValue READ_JSON_FILE;
     public static final ForgeConfigSpec.ConfigValue<String> GIVE_COMMAND;
     public static final ForgeConfigSpec.IntValue MAX_TOOLTIP_LINES;
     public static final ForgeConfigSpec.EnumValue<ColorCalculationMode> COLOR_CALCULATION_MODE;
@@ -26,7 +27,6 @@ public final class MCRGBConfig {
         ForgeConfigSpec.Builder configBuilder = new ForgeConfigSpec.Builder();
         ALWAYS_SHOW_TOOLTIPS = configBuilder.define("alwaysShowToolTips", false);
         SLIDER_CONSTANT_UPDATE = configBuilder.define("sliderConstantUpdate", true);
-        READ_JSON_FILE = configBuilder.define("readJsonFile", false);
         BYPASS_OP = configBuilder.define("bypassOP", false);
         GIVE_COMMAND = configBuilder.define("command", "give %p %i%c %q");
         MAX_TOOLTIP_LINES = configBuilder.defineInRange("maxTooltipLines", 15, 1, 100);

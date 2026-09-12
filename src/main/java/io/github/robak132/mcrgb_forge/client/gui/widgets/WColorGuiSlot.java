@@ -5,6 +5,7 @@ import io.github.robak132.libgui_forge.client.ScreenDrawing;
 import io.github.robak132.libgui_forge.widget.TooltipBuilder;
 import io.github.robak132.libgui_forge.widget.WWidget;
 import io.github.robak132.libgui_forge.widget.data.InputResult;
+import io.github.robak132.mcrgb_forge.client.ColorInfoLines;
 import io.github.robak132.mcrgb_forge.client.Localisation;
 import io.github.robak132.mcrgb_forge.client.MCRGBClient;
 import io.github.robak132.mcrgb_forge.client.analysis.SpriteDetails;
@@ -21,8 +22,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +31,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 @Setter
 public class WColorGuiSlot extends WWidget {
 
-    public static final ResourceLocation SLOT_TEXTURE = ResourceLocation.fromNamespaceAndPath(LibGui.MOD_ID, "textures/widget/item_slot.png");
+    public static final ResourceLocation SLOT_TEXTURE = ResourceLocation.fromNamespaceAndPath(LibGui.MOD_ID,
+            "textures/widget/item_slot.png");
     private final ColorsGuiDescription parentGui;
     private final int hotbarSlot;
     private ItemStack stack;
@@ -62,7 +62,10 @@ public class WColorGuiSlot extends WWidget {
 
         if (button == 1) {
             if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) {
-                Minecraft.getInstance().setScreen(new MCRGBClientScreen(new BlockGuiDescription(stack, parentGui.activeColor.toRGB())));
+                Minecraft.getInstance().setScreen(
+                        new MCRGBClientScreen(new BlockGuiDescription(
+                                stack, parentGui.activeColor.toRGB(),
+                                parentGui.getTextureNoiseTarget(), parentGui.getScrollPosition())));
             }
             return InputResult.PROCESSED;
         }
@@ -153,11 +156,7 @@ public class WColorGuiSlot extends WWidget {
             return;
         }
         tooltip.add(Component.translatable(stack.getDescriptionId()));
-
-        // Convert item to block
         Block block = Block.byItem(stack.getItem());
-
-        // Get the latest scan data
         Map<Block, List<SpriteDetails>> scan = MCRGBClient.getLastScan();
         if (scan == null) {
             return;
@@ -170,31 +169,17 @@ public class WColorGuiSlot extends WWidget {
 
         int colorLines = 0;
         int maxLines = MCRGBConfig.MAX_TOOLTIP_LINES.get();
-        // Build tooltip output
         for (SpriteDetails sd : details) {
+            List<Component> lines = ColorInfoLines.linesFor(sd);
 
-            List<String> strings = sd.getStrings();
-            List<Integer> colors = sd.getTextColors();
-            if (strings.isEmpty()) {
-                continue;
-            }
-
-            for (int i = 0; i < strings.size(); i++) {
+            for (Component line : lines) {
                 if (colorLines >= maxLines) {
                     tooltip.add(Component.empty());
                     tooltip.add(Component.translatable(Localisation.TOOLTIP_SHOW_MORE)
                             .withStyle(ChatFormatting.GRAY));
                     return;
                 }
-                String label = strings.get(i);
-                int col = colors.get(i);
-
-                // Gray descriptive text
-                MutableComponent text = Component.literal(label).withStyle(ChatFormatting.GRAY);
-
-                // Color block (⬛)
-                MutableComponent colorBox = Component.literal("⬛").withStyle(Style.EMPTY.withColor(col));
-                tooltip.add((i == 0) ? text.withStyle(ChatFormatting.DARK_GRAY) : colorBox.append(text));
+                tooltip.add(line);
                 colorLines++;
             }
         }

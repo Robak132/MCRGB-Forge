@@ -13,17 +13,7 @@ public class PaletteSerializer implements Serializer<List<Palette>> {
 
     @Override
     public Path getFile() {
-        return Path.of("mcrgb_forge_colors", "palettes.json");
-    }
-
-    @Override
-    public boolean delete() {
-        try {
-            return Files.deleteIfExists(getFile());
-        } catch (Exception e) {
-            log.error("Failed to delete palettes file: {}", e.getMessage());
-            return false;
-        }
+        return Path.of("mcrgb_forge_palettes.json");
     }
 
     @Override
@@ -45,9 +35,7 @@ public class PaletteSerializer implements Serializer<List<Palette>> {
     @Override
     public void save(List<Palette> palettes) {
         try {
-            Files.createDirectories(getFile().getParent());
             Files.writeString(getFile(), GSON.toJson(palettes));
-
         } catch (Exception e) {
             log.error("Failed to save palettes: {}", e.getMessage());
         }

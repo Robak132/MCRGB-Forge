@@ -10,7 +10,8 @@ public class WTextureThumbnail extends WSprite {
     Integer index;
     Consumer<Integer> onClick;
 
-    public WTextureThumbnail(ResourceLocation image, float u1, float v1, float u2, float v2, int i, Consumer<Integer> onClick) {
+    public WTextureThumbnail(ResourceLocation image, float u1, float v1, float u2, float v2, int i,
+            Consumer<Integer> onClick) {
         super(image, u1, v1, u2, v2);
         this.index = i;
         this.onClick = onClick;

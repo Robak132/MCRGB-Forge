@@ -6,7 +6,7 @@ import net.minecraft.core.Direction;
 
 public class WColorScrollBar extends WScrollBar {
 
-    Runnable runnable;
+    private final Runnable runnable;
 
     public WColorScrollBar(Runnable runnable) {
         super(Direction.Plane.VERTICAL);
@@ -15,14 +15,15 @@ public class WColorScrollBar extends WScrollBar {
 
     @Override
     public InputResult onMouseDrag(int x, int y, int button, double deltaX, double deltaY) {
+        InputResult result = super.onMouseDrag(x, y, button, deltaX, deltaY);
         this.runnable.run();
-        return super.onMouseDrag(x, y, button, deltaX, deltaY);
+        return result;
     }
 
     @Override
     public InputResult onMouseScroll(int x, int y, double vAmount) {
+        setValue(getValue() - (int) Math.signum(vAmount));
         this.runnable.run();
-        setValue(getValue() + (int) -vAmount);
         return InputResult.PROCESSED;
     }
 }

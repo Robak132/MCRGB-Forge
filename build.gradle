@@ -118,7 +118,6 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
-// Proper Mixin setup for Forge
 mixin {
     add sourceSets.main, 'mixins.mcrgb_forge.refmap.json'
     config 'mixins.mcrgb_forge.json'

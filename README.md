@@ -1,4 +1,4 @@
-# MCRGB Mod for Minecraft Fabric 1.20.1+
+# MCRGB Mod for Minecraft Forge 1.20.1
 
 - [Modrinth](https://modrinth.com/mod/mcrgb_forge)
 
@@ -12,9 +12,9 @@
 
 ## Requirements:
 
-- Minecraft 1.20.1+
-- Fabric
-- Fabric API
+- Minecraft 1.20.1
+- Forge 47.4.0 or newer
+- LibGui Forge 8.1.4 or newer
 
 ## Recommended:
 
@@ -57,23 +57,31 @@ Optional: You can also view this info in regular inventories by changing the con
 
 ## How it works:
 
-On first launch, MCRGB will generate a file, located in `.minecraft/mcrgb_forge_colors/file.json`
-MCRGB attempts to scan every block texture in the game and calculates the dominant colors by grouping together similar
-pixels based on their euclidean distance
-in sRGB space, and calculating the mean average of each group. The results are saved in this file. If you ever need to
-regenerate the file (if you've changed
-resource packs or added new mods which add more blocks), click the "Refresh" button in the color picker UI.
+When you join a world, MCRGB scans the textures used by every registered block. The default OKLab mode groups each
+texture into up to five perceptually similar colors and records the proportion occupied by each group. Mean, median,
+and the original RGB grouping algorithm are also available in the configuration.
 
-When you input a color to the color picker, the list of blocks is sorted by the euclidean distance to each of the
-dominant colors in each texture. Each texture
-is weighted according to how much of that color takes up in the texture.
+Each texture also receives two values from 0 to 100:
+
+- **Noise** measures how much its visible pixels differ from the texture's average color.
+- **Spatial** measures local variation between pixels in a wrapping 5x5 neighborhood.
+
+The color picker sorts blocks using a score made from 90% perceptual color difference and 10% difference from the
+requested noise and spatial values. Selecting a color from a block also copies the noise values for that texture.
+
+Binary caching is optional. When enabled, completed scans are saved to
+`.minecraft/mcrgb_forge_colors.bin` and loaded when joining a world. A missing, empty, or malformed cache is
+regenerated automatically. Use the refresh button after changing resource packs or adding mods with new blocks.
 
 ### EMI color search
 
-When EMI is installed, prefix its search with `^` and a six-digit RGB hex color to sort matching block items by color
-similarity:
+When EMI is installed, prefix its search with `^RRGGBB:NOISE:SPATIAL` to sort matching block items by color and optional
+texture metrics. Noise and Spatial use the same 0–100 scale as the picker and may be omitted:
 
 - `^ff0000` sorts all indexed blocks from closest to furthest from red.
+- `^ff0000:25` also targets Noise 25.
+- `^ff0000::40` targets Spatial 40 without applying a Noise target.
+- `^ff0000:25:40` targets both texture metrics.
 - `^ff0000 wool` applies EMI's normal `wool` filter, then sorts the results by their similarity to red.
 
 Non-block items and blocks without cached color data remain after color-scored results in their original order.
